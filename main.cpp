@@ -50,7 +50,7 @@ int recursive_folders(const std::string &root_path)
     const double Txx = -270.0;
     const double Txy = 0.0;
     const double Tyx = -10.0;
-    const double Tyy = 280.0;
+    const double Tyy = 270.0;
 
     /* Constants for NCC */
     const int roi_w = 128, roi_h = 128, topLeft_x = 300, topLeft_y = 208, frameWidth = 728, frameHeight = 544;
