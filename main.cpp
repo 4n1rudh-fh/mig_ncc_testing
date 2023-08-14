@@ -17,7 +17,6 @@
 #include <filesystem>
 #include <vector>
 #include <opencv4/opencv2/opencv.hpp>
-#include "xlsxwriter.h"
 
 // Creating a new variable type to get NCC results
 struct LocAndConf
@@ -93,28 +92,16 @@ int recursive_folders(const std::string &root_path)
                             create_folders("../Results/" + cam_param_entry.path().filename().string() + "/" + movement_entry.path().filename().string() + "/" + exp_entry.path().filename().string());
 
                             /* Creating an excel file */
-                            std::string xlsx_path = "../Results/" + cam_param_entry.path().filename().string() + "/" + movement_entry.path().filename().string() + "/" + exp_entry.path().filename().string() + "/" + "Results.xlsx";
-                            int row_count = 1;
-                            lxw_workbook *workbook = workbook_new(xlsx_path.c_str());
-                            lxw_worksheet *worksheet = workbook_add_worksheet(workbook, "Results");
-
-                            /* Filling the first row of excel sheet with strings */
-                            worksheet_write_string(worksheet, 0, 0, "Pixel Shift X (Columns)", NULL);
-                            worksheet_write_string(worksheet, 0, 1, "Pixel Shift Y (Rows)", NULL);
-                            worksheet_write_string(worksheet, 0, 2, "Confidence (%)", NULL);
-                            worksheet_write_string(worksheet, 0, 3, "Distance X (mm)", NULL);
-                            worksheet_write_string(worksheet, 0, 4, "Distance Y (mm)", NULL);
-                            worksheet_write_string(worksheet, 0, 5, "Error X (mm)", NULL);
-                            worksheet_write_string(worksheet, 0, 6, "Error X (%)", NULL);
-                            worksheet_write_string(worksheet, 0, 7, "Error Y (mm)", NULL);
-                            worksheet_write_string(worksheet, 0, 8, "Error Y (%)", NULL);
-                            worksheet_write_string(worksheet, 0, 9, "MIG", NULL);
-                            worksheet_write_string(worksheet, 0, 10, "Avg. MIG", NULL);
-
-                            /* Declaring an empty mig vector and avg. MIG variable */
-                            std::vector<double> mig_vector;
-                            double avg_mig;
-                            double bucket = 0.0;
+                            std::string csv_path = "../Results/" + cam_param_entry.path().filename().string() + "/" + movement_entry.path().filename().string() + "/" + exp_entry.path().filename().string() + "/" + "Results.csv";
+                            std::ofstream csv_file(csv_path);
+                            if (!csv_file.is_open())
+                            {
+                                std::cerr << "Error opening the .csv file!!!" <<std::endl;
+                                return EXIT_FAILURE;
+                            }
+                            
+                            /* Adding first row to the .csv file */
+                            csv_file << "Pixel Shift X (Columns), Pixel Shift Y (Rows), Confidence (%), Dist. X (mm), Dist. Y (mm), Error X (mm), Error Y (mm), Error X (%), Error Y (%), MIG" << std::endl;
 
                             /* Declaring an empty string vector to store frame names */
                             std::vector<std::string> file_names;
@@ -141,8 +128,6 @@ int recursive_folders(const std::string &root_path)
                             std::string frame_0_path = exp_entry.path().string() + "/frame_0.png";
                             cv::Mat frame_0 = cv::imread(frame_0_path, cv::IMREAD_GRAYSCALE);
                             cv::Mat roi = get_roi(frame_0, roi_w, roi_h, topLeft_x, topLeft_y);
-                            
-                            
 
                             /***** MIG and NCC Start *****/
 
@@ -159,43 +144,27 @@ int recursive_folders(const std::string &root_path)
                                 double shift_col_mm = ((ncc_results.shift_col * Tyy) - (ncc_results.shift_row * Txy)) / ((Txx * Tyy) - (Txy * Tyx));
                                 double shift_row_mm = ((ncc_results.shift_row * Txx) - (ncc_results.shift_col * Tyx)) / ((Txx * Tyy) - (Txy * Tyx));
 
-                                worksheet_write_number(worksheet, row_count, 0, ncc_results.shift_col, NULL);
-                                worksheet_write_number(worksheet, row_count, 1, ncc_results.shift_row, NULL);
-                                worksheet_write_number(worksheet, row_count, 2, ncc_results.confidence, NULL);
-                                
-                                // Comment the following for calibration
-                                worksheet_write_number(worksheet, row_count, 3, shift_col_mm, NULL);
-                                worksheet_write_number(worksheet, row_count, 4, shift_row_mm, NULL);
+                                csv_file << ncc_results.shift_col << ","
+                                         << ncc_results.shift_row << ","
+                                         << ncc_results.confidence << ","
+                                         << shift_col_mm << ","
+                                         << shift_row_mm << ","
+                                         << ",,,,"
+                                         << mig_frame(img)
+                                         << std::endl;
 
-                                worksheet_write_number(worksheet, row_count, 9, mig_frame(img), NULL);
-                                mig_vector.push_back(mig_frame(img));
-                                row_count++;
                             }
 
-                            /* Summing up the MIG values for all frames and averaging it and adding it to the excel sheet*/
-                            for (const auto& mig_element: mig_vector)
-                            {
-                                bucket += mig_element;
-                            }
-                            avg_mig = bucket / static_cast<double>(mig_vector.size());
-                            worksheet_write_number(worksheet, 1, 10, avg_mig, NULL);
-                            
                             /***** MIG and NCC End *****/
 
-
-
-                            // Closing the excel sheet
-                            workbook_close(workbook);
-
-                            // Clearing the MIG vector for next experiment directory
-                            mig_vector.clear();
+                            csv_file.close();
                         }
                     }
                 }
             }
         }
     }
-    
+
     return EXIT_SUCCESS;
 }
 
