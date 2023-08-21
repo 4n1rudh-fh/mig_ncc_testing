@@ -101,7 +101,7 @@ int recursive_folders(const std::string &root_path)
                             }
                             
                             /* Adding first row to the .csv file */
-                            csv_file << "Pixel Shift X (Columns), Pixel Shift Y (Rows), Confidence (%), Dist. X (mm), Dist. Y (mm), Error X (mm), Error Y (mm), Error X (%), Error Y (%), MIG" << std::endl;
+                            csv_file << "Pixel Shift X (Columns),Pixel Shift Y (Rows),Confidence (%),Dist. X (mm),Dist. Y (mm),Error X (mm),Error Y (mm),Error X (%),Error Y (%),MIG" << std::endl;
 
                             /* Declaring an empty string vector to store frame names */
                             std::vector<std::string> file_names;
