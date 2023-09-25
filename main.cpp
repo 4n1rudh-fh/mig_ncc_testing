@@ -14,6 +14,7 @@
 */
 
 #include <iostream>
+#include <cmath>
 #include <filesystem>
 #include <vector>
 #include <opencv4/opencv2/opencv.hpp>
@@ -37,7 +38,7 @@ LocAndConf get_results(cv::Mat &frame, cv::Mat &roi, const int &frameWidth, cons
 int main()
 {
     // Give the absolute path of folder that contains all the experiments and the images
-    std::string images_dir = "../images";
+    std::string images_dir = "../laser_decorrelation_images";
     recursive_folders(images_dir);
 
     return EXIT_SUCCESS;
@@ -46,10 +47,10 @@ int main()
 int recursive_folders(const std::string &root_path)
 {
     /* Transformation Matrix Parameters */
-    const double Txx = -270.0;
-    const double Txy = 0.0;
-    const double Tyx = -10.0;
-    const double Tyy = 270.0;
+    const double Txx = -256.75;
+    const double Txy = 2.5;
+    const double Tyx = 3.5;
+    const double Tyy = 260.5;
 
     /* Constants for NCC */
     const int roi_w = 128, roi_h = 128, topLeft_x = 300, topLeft_y = 208, frameWidth = 728, frameHeight = 544;
@@ -89,10 +90,13 @@ int recursive_folders(const std::string &root_path)
                             std::cout << "/// Inside Experiment Directory       :       " << exp_dir << std::endl;
 
                             /* Creating folders at this path */
-                            create_folders("../Results/" + cam_param_entry.path().filename().string() + "/" + movement_entry.path().filename().string() + "/" + exp_entry.path().filename().string());
+                            create_folders("../laser_decorrelation_results/" + cam_param_entry.path().filename().string() + "/" + movement_entry.path().filename().string() + "/" + exp_entry.path().filename().string());
 
-                            /* Creating an excel file */
-                            std::string csv_path = "../Results/" + cam_param_entry.path().filename().string() + "/" + movement_entry.path().filename().string() + "/" + exp_entry.path().filename().string() + "/" + "Results.csv";
+                            /* Creating folders to save NCC images */
+                            create_folders("../laser_decorrelation_images_ncc/" + cam_param_entry.path().filename().string() + "/" + movement_entry.path().filename().string() + "/" + exp_entry.path().filename().string());
+
+                            /* Creating a csv file */
+                            std::string csv_path = "../laser_decorrelation_results/" + cam_param_entry.path().filename().string() + "/" + movement_entry.path().filename().string() + "/" + exp_entry.path().filename().string() + "/" + "Results.csv";
                             std::ofstream csv_file(csv_path);
                             if (!csv_file.is_open())
                             {
@@ -144,6 +148,22 @@ int recursive_folders(const std::string &root_path)
                                 double shift_col_mm = ((ncc_results.shift_col * Tyy) - (ncc_results.shift_row * Txy)) / ((Txx * Tyy) - (Txy * Tyx));
                                 double shift_row_mm = ((ncc_results.shift_row * Txx) - (ncc_results.shift_col * Tyx)) / ((Txx * Tyy) - (Txy * Tyx));
 
+                                // // Uncomment following during calibration
+                                // csv_file << ncc_results.shift_col << ","
+                                //          << ncc_results.shift_row << ","
+                                //          << ncc_results.confidence << ","
+                                //          << ",,,,,,"
+                                //          << mig_frame(img)
+                                //          << std::endl;
+
+                                // Uncomment the following when trying to save ncc images
+                                // cv::rectangle(img, ncc_results.match_loc, cv::Point(ncc_results.match_loc.x + roi_w, ncc_results.match_loc.y + roi_h), cv::Scalar(0), 3);
+
+                                // cv::putText(img, "Confidence: " + std::to_string(static_cast<int>(std::round(ncc_results.confidence))) + "%", cv::Point(10, 40), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0), 3);
+
+                                // cv::imwrite("../laser_decorrelation_images_ncc/" + cam_param_entry.path().filename().string() + "/" + movement_entry.path().filename().string() + "/" + exp_entry.path().filename().string() + "/" + file_name, img);
+
+                                // Uncomment following during testing
                                 csv_file << ncc_results.shift_col << ","
                                          << ncc_results.shift_row << ","
                                          << ncc_results.confidence << ","
@@ -152,7 +172,6 @@ int recursive_folders(const std::string &root_path)
                                          << ",,,,"
                                          << mig_frame(img)
                                          << std::endl;
-
                             }
 
                             /***** MIG and NCC End *****/
