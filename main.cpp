@@ -19,7 +19,12 @@
 #include <vector>
 #include <opencv4/opencv2/opencv.hpp>
 
-// Creating a new variable type to get NCC results
+/* 
+* Creating a new variable type to get NCC results. (LocAndConf --> Location & Confidence)
+* match_loc: saves location of found template
+* confidence: cross-correlation value of the found template
+* shift_row, shift_col: saving pixel shift with respect to the center of frame
+*/
 struct LocAndConf
 {
     cv::Point match_loc;
@@ -27,11 +32,56 @@ struct LocAndConf
     int shift_row, shift_col;
 };
 
-/* Function prototyping */
+/* 
+* This function goes recursively through the directory containing images and uses other functions to calculate and save NCC results.
+* func: recursive_folders()
+* param: relative path with respect to build folder
+* return: 0 or 1
+*/
 int recursive_folders(const std::string &root_path);
+
+/* 
+* This function calculates MIG (Mean Intensity Gradient) for a single frame and return that value.
+
+* func: mig_frame()
+* param: reference to an OpenCV matrix object
+* return: MIG value of type double for the given frame
+*/
 double mig_frame(const cv::Mat &frame);
+
+/*
+* This function creates (recursive) folders.
+
+* func: create_folders()
+* param: path relative to build folder
+* return: void
+*/
 void create_folders(const std::string &path);
+
+/*
+* This function gets Region of Interest (RoI) from a frame which would be used as template to perform template matching.
+
+* func: get_roi()
+* param: 
+    - reference to OpenCV frame/matrix object
+    - width of RoI
+    - height of RoI
+    - Coordinates of top left corner of RoI
+* return: OpenCV frame/matrix object 
+*/
 cv::Mat get_roi(cv::Mat &frame, const int &width, const int &height, const int &topLeft_x, const int &topLeft_y);
+
+/*
+* This function performs NCC template matching and returns the results from the match.
+
+* func: get_results
+* param: 
+    - reference to OpenCV frame object
+    - reference of OpenCV RoI object
+    - width and height of frame
+    - width and height of RoI
+* return: struct type LocAndConf
+*/
 LocAndConf get_results(cv::Mat &frame, cv::Mat &roi, const int &frameWidth, const int &frameHeight, const int &width, const int &height);
 
 /* Main */
